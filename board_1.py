@@ -6,7 +6,7 @@ COLORS = ['red', 'blue']
 
 class Board:
     def __init__(self, width, height, mines):
-        pygame.display.set_caption('Папа сапёра')
+        pygame.display.set_caption('Сапёр')
         self.cell_size = 30
         self.size = width * self.cell_size * 2, height * self.cell_size * 2
         self.width, self.height = width, height
@@ -68,7 +68,7 @@ class Board:
 
 class Minesweeper(Board):
     def __init__(self, width, height, mines):
-        pygame.display.set_caption('Папа сапёра')
+        pygame.display.set_caption('Сапёр')
         self.cell_size = 30
         self.board = [['-1'] * (width + 2) for _ in range(height + 2)]
         mn = set()
@@ -149,5 +149,4 @@ class Minesweeper(Board):
                         self.open_cell(pos)
     
     def game_over(self):
-        # self.screen.fill('white')
         return -1
