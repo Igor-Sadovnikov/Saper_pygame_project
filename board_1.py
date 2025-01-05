@@ -1,7 +1,25 @@
 import pygame
+import sys
+import os
 from random import randint
 
 COLORS = ['red', 'blue']
+
+
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
 
 
 class Board:
@@ -34,18 +52,7 @@ class Board:
         self.left = left
         self.top = top
         self.cell_size = cell_size
-    
-    def render(self):
-        for i in range(self.width):
-            for j in range(self.height):
-                pygame.draw.rect(self.screen, pygame.Color('white'),
-                                 (self.left + i * self.cell_size, self.top + j * self.cell_size,
-                                  self.cell_size, self.cell_size), 1)
-                pygame.draw.circle(self.screen, pygame.Color(COLORS[self.board[j][i]]),
-                                    ((self.left + i * self.cell_size + self.cell_size // 2,
-                                    self.top + j * self.cell_size + self.cell_size // 2)),
-                                    self.cell_size // 2 - 4, 0)
-
+                
     def get_cell(self, pos):
         x = (pos[0] - self.left) // self.cell_size
         y = (pos[1] - self.top) // self.cell_size
@@ -70,13 +77,16 @@ class Minesweeper(Board):
     def __init__(self, width, height, mines):
         pygame.display.set_caption('Сапёр')
         self.cell_size = 30
+        self.w = width
+        self.h = height
+        self.mines = mines
         self.board = [['-1'] * (width + 2) for _ in range(height + 2)]
-        mn = set()
-        while len(mn) < mines:
-            koords = tuple([randint(1, height), randint(1, width)])
-            mn.add(koords)
-        for elem in mn:
-            self.board[elem[0]][elem[1]] = '10'
+        # mn = set()
+        # while len(mn) < mines:
+        #     koords = tuple([randint(1, height), randint(1, width)])
+        #     mn.add(koords)
+        # for elem in mn:
+        #     self.board[elem[0]][elem[1]] = '10'
         self.left = 10
         self.top = 10
         self.cell_size = 30
@@ -90,15 +100,17 @@ class Minesweeper(Board):
         self.visited = set()
     
     def render(self):
+        image = load_image('bomb.png')
         for i in range(1, self.width_cl + 1):
             for j in range(1, self.height_cl + 1):
                 pygame.draw.rect(self.screen, pygame.Color('white'),
                     (self.left + i * self.cell_size, self.top + j * self.cell_size,
                     self.cell_size, self.cell_size), 1)
                 if int(self.board[j][i]) == 10:
-                    pygame.draw.rect(self.screen, pygame.Color('red'),
-                                    (self.left + i * self.cell_size + 1, self.top + j * self.cell_size + 1,
-                                    self.cell_size - 2, self.cell_size - 2), 0)
+                    self.screen.blit(image, (self.left + i * self.cell_size, self.top + j * self.cell_size))
+                    # pygame.draw.rect(self.screen, pygame.Color('red'),
+                    #                 (self.left + i * self.cell_size + 1, self.top + j * self.cell_size + 1,
+                    #                 self.cell_size - 2, self.cell_size - 2), 0)
                 font = pygame.font.Font(None, 20)
                 if str(self.board[j][i]) != '-1' and str(self.board[j][i]) != '10':
                     show_text = str(self.board[j][i])
@@ -113,6 +125,14 @@ class Minesweeper(Board):
         kort = pos
         x = kort[0]
         y = kort[1]
+        if len(self.visited) == 0:
+            mn = set()
+            while len(mn) < self.mines:
+                koords = tuple([randint(1, self.h), randint(1, self.w)])
+                if koords != kort:
+                    mn.add(koords)
+            for elem in mn:
+                self.board[elem[0]][elem[1]] = '10'
         if x < 0 or x > self.width_cl or y < 0 or y > self.height_cl:
             return
         if (x, y) in self.visited:
