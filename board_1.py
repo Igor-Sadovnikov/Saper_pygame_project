@@ -99,16 +99,18 @@ class Minesweeper(Board):
         self.size = self.width, self.height
         self.screen = pygame.display.set_mode(self.size)
         self.visited = set()
+        self.flags = set()
     
     def render(self):
         image = load_image('bomb.png')
+        image_flag = load_image('flag.png')
         for i in range(1, self.width_cl + 1):
             for j in range(1, self.height_cl + 1):
                 pygame.draw.rect(self.screen, pygame.Color('white'),
                     (self.left + i * self.cell_size, self.top + j * self.cell_size,
                     self.cell_size, self.cell_size), 1)
                 if int(self.board[j][i]) == 10:
-                    self.screen.blit(image, (self.left + i * self.cell_size, self.top + j * self.cell_size))
+                    self.screen.blit(image, (self.left + i * self.cell_size + 5, self.top + j * self.cell_size))
                     # pygame.draw.rect(self.screen, pygame.Color('red'),
                     #                 (self.left + i * self.cell_size + 1, self.top + j * self.cell_size + 1,
                     #                 self.cell_size - 2, self.cell_size - 2), 0)
@@ -121,7 +123,9 @@ class Minesweeper(Board):
                 text_x = self.cell_size * i + 10
                 text_y = self.cell_size * j + 10
                 self.screen.blit(text, (text_x, text_y))
-    
+                if tuple([i, j]) in self.flags:
+                    self.screen.blit(image_flag, (self.left + i * self.cell_size + 2, self.top + j * self.cell_size))
+     
     def open_cell(self, pos):
         kort = pos
         x = kort[0]
@@ -168,6 +172,15 @@ class Minesweeper(Board):
                     if (dx != 0 or dy != 0):
                         pos = (x + dx, y + dy,)
                         self.open_cell(pos)
+    
+    def show_flag(self, pos):
+        kort = pos
+        x = kort[0]
+        y = kort[1]
+        if kort in self.flags:
+            self.flags.discard(kort)
+        else:
+            self.flags.add(kort)
     
     def game_over(self):
         return -1

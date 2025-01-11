@@ -70,11 +70,14 @@ if __name__ == '__main__':
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     pos = board.get_cell(event.pos)
                     if board.open_cell(pos) == -1:
                         print('game_over')
                         ch = False
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                    pos = board.get_cell(event.pos)
+                    board.show_flag(pos)
                 board.screen.fill('black')
                 board.render()
         else:
