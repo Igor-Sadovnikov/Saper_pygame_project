@@ -1,4 +1,3 @@
-# без флагов
 import pygame
 import sys
 import os
@@ -123,20 +122,24 @@ class Minesweeper(Board):
                 text_x = self.cell_size * i + 10
                 text_y = self.cell_size * j + 10
                 self.screen.blit(text, (text_x, text_y))
-                if tuple([i, j]) in self.flags:
+                if tuple([j, i]) in self.flags:
                     self.screen.blit(image_flag, (self.left + i * self.cell_size + 2, self.top + j * self.cell_size))
+                mines_left = str(self.mines - len(self.flags))
+                font = pygame.font.Font(None, 40)
+                text = font.render(mines_left, True, 'red')
+                self.screen.blit(text, (10, 10))
      
     def open_cell(self, pos):
         kort = pos
         x = kort[0]
         y = kort[1]
         if len(self.visited) == 0:
-            mn = set()
-            while len(mn) < self.mines:
+            self.mn = set()
+            while len(self.mn) < self.mines:
                 koords = tuple([randint(1, self.h), randint(1, self.w)])
                 if koords != kort:
-                    mn.add(koords)
-            for elem in mn:
+                    self.mn.add(koords)
+            for elem in self.mn:
                 self.board[elem[0]][elem[1]] = '10'
         if x < 0 or x > self.width_cl or y < 0 or y > self.height_cl:
             return
@@ -144,7 +147,6 @@ class Minesweeper(Board):
             return
         elif self.board[y][x] == '10':
             return self.game_over()
-        self.visited.add((x, y))
         kort = (x, y,)
         print(kort)
         count = 0
@@ -166,6 +168,8 @@ class Minesweeper(Board):
             if self.board[kort[1] + 1][kort[0] + 1] == '10':
                 count += 1
             self.board[kort[1]][kort[0]] = str(count)
+            if self.board[y][x] != '10':
+                self.visited.add((x, y))
         if self.board[y][x] == '0':
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
@@ -177,10 +181,22 @@ class Minesweeper(Board):
         kort = pos
         x = kort[0]
         y = kort[1]
-        if kort in self.flags:
-            self.flags.discard(kort)
+        kort1 = tuple([y, x])
+        if kort1 in self.flags:
+            self.flags.discard(kort1)
         else:
-            self.flags.add(kort)
+            self.flags.add(kort1)
     
     def game_over(self):
         return -1
+    
+    def win(self):
+        for i in range(1, 11):
+            for j in range(1, 11):
+                if self.board[i][j] == '-1':
+                    return 0
+        print(self.flags)
+        print(self.mn)  
+        if self.flags == self.mn:
+            return 1
+        return 0

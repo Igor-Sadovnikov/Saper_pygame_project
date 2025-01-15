@@ -26,11 +26,13 @@ tile_width = tile_height = 50
 screen = pygame.display.set_mode(size)
 FPS = 50
 
+
 def terminate():
     pygame.quit()
     sys.exit()
 
 def start_screen():
+    global count_of_mines
     intro_text = ["САПЕР"]
     fon = pygame.transform.scale(load_image('fon.png'), (600, 600))
     screen.blit(fon, (0, 0))
@@ -61,10 +63,17 @@ def start_screen():
 if __name__ == '__main__':
     pygame.init()
     ch = True
-    board = Minesweeper(10, 10, 10)
-    board.set_view(0, 0, 50)
     running = True
     start_screen()
+    while True:
+        try:
+            count_of_mines = int(input('Введите количество мин:'))
+            if 1 < count_of_mines < 100:
+                break
+        except Exception:
+            print('Число введено неверно')
+    board = Minesweeper(10, 10, count_of_mines)
+    board.set_view(0, 0, 50)
     while running:
         if ch:
             for event in pygame.event.get():
@@ -75,9 +84,13 @@ if __name__ == '__main__':
                     if board.open_cell(pos) == -1:
                         print('game_over')
                         ch = False
+                    if board.win() == 1:
+                        print('You win')
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     pos = board.get_cell(event.pos)
                     board.show_flag(pos)
+                    if board.win() == 1:
+                        print('You win')
                 board.screen.fill('black')
                 board.render()
         else:
