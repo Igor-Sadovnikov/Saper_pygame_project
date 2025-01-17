@@ -84,13 +84,18 @@ if __name__ == '__main__':
                     if board.open_cell(pos) == -1:
                         print('game_over')
                         ch = False
+                        res = False
                     if board.win() == 1:
                         print('You win')
+                        ch = False
+                        res = True
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     pos = board.get_cell(event.pos)
                     board.show_flag(pos)
                     if board.win() == 1:
                         print('You win')
+                        ch = False
+                        res = True
                 board.screen.fill('black')
                 board.render()
         else:
@@ -98,7 +103,10 @@ if __name__ == '__main__':
             pygame.font.init()
             my_font_1 = pygame.font.SysFont('Classy Vogue', 100)
             my_font_2 = pygame.font.SysFont('Classy Vogue', 30)
-            text_surface = my_font_1.render('Ты проиграл', False, (0, 0, 0))
+            if res == True:
+                text_surface = my_font_1.render('Ты выиграл', False, (0, 0, 0))
+            else:
+                text_surface = my_font_1.render('Ты проиграл', False, (0, 0, 0))
             text_surface_restart = my_font_2.render('Начать заново', False, (0, 0, 0))
             text_surface_restart_rect = text_surface_restart.get_rect(topleft=(230, 400))
             board.screen.blit(text_surface, (100, 200))
