@@ -33,20 +33,8 @@ def terminate():
 
 def start_screen():
     global count_of_mines
-    intro_text = ["САПЕР"]
-    fon = pygame.transform.scale(load_image('fon.png'), (600, 600))
+    fon = pygame.transform.scale(load_image('fon.png'), (500, 500))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
-    text_coord = 50
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 10   
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-
     clock = pygame.time.Clock()
 
     while True:
@@ -105,11 +93,14 @@ if __name__ == '__main__':
             my_font_2 = pygame.font.SysFont('Classy Vogue', 30)
             if res == True:
                 text_surface = my_font_1.render('Ты выиграл', False, (0, 0, 0))
+                board.screen.blit(text_surface, (100, 200))
             else:
-                text_surface = my_font_1.render('Ты проиграл', False, (0, 0, 0))
+                fon_end = pygame.transform.scale(load_image('loss_fon.png'), (600, 600))
+                board.screen.blit(fon_end, (0, 0))
+                # text_surface = my_font_1.render('Ты проиграл', False, (0, 0, 0))
             text_surface_restart = my_font_2.render('Начать заново', False, (0, 0, 0))
             text_surface_restart_rect = text_surface_restart.get_rect(topleft=(230, 400))
-            board.screen.blit(text_surface, (100, 200))
+            # board.screen.blit(text_surface, (100, 200))
             board.screen.blit(text_surface_restart, text_surface_restart_rect)
             for event in pygame.event.get():
                 if text_surface_restart_rect.collidepoint(event.pos) and event.type == pygame.MOUSEBUTTONDOWN:
