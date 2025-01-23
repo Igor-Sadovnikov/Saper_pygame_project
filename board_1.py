@@ -1,6 +1,7 @@
 import pygame
 import sys
 import os
+import sqlite3
 from random import randint
 
 COLORS = ['red', 'blue']
@@ -74,19 +75,15 @@ class Board:
 
 
 class Minesweeper(Board):
-    def __init__(self, width, height, mines):
+    def __init__(self, width, height, mines, username):
         pygame.display.set_caption('Сапёр')
         self.cell_size = 30
         self.w = width
         self.h = height
         self.mines = mines
+        self.username = username
+        self.count_true_mines = 0
         self.board = [['-1'] * (width + 2) for _ in range(height + 2)]
-        # mn = set()
-        # while len(mn) < mines:
-        #     koords = tuple([randint(1, height), randint(1, width)])
-        #     mn.add(koords)
-        # for elem in mn:
-        #     self.board[elem[0]][elem[1]] = '10'
         self.left = 10
         self.top = 10
         self.cell_size = 30
@@ -109,10 +106,7 @@ class Minesweeper(Board):
                     (self.left + i * self.cell_size, self.top + j * self.cell_size,
                     self.cell_size, self.cell_size), 1)
                 if int(self.board[j][i]) == 10:
-                    self.screen.blit(image, (self.left + i * self.cell_size + 5, self.top + j * self.cell_size))
-                    # pygame.draw.rect(self.screen, pygame.Color('red'),
-                    #                 (self.left + i * self.cell_size + 1, self.top + j * self.cell_size + 1,
-                    #                 self.cell_size - 2, self.cell_size - 2), 0)
+                    self.screen.blit(image, (self.left + i * self.cell_size + 5, self.top + j * self.cell_size))    
                 font = pygame.font.Font(None, 20)
                 if str(self.board[j][i]) != '-1' and str(self.board[j][i]) != '10':
                     show_text = str(self.board[j][i])
@@ -133,6 +127,7 @@ class Minesweeper(Board):
         kort = pos
         x = kort[0]
         y = kort[1]
+        kort = tuple([y, x])
         if len(self.visited) == 0:
             self.mn = set()
             while len(self.mn) < self.mines:
@@ -188,15 +183,65 @@ class Minesweeper(Board):
             self.flags.add(kort1)
     
     def game_over(self):
+        self.count_true_mines = len(self.flags & self.mn)
+        self.place = self.get_results()
         return -1
     
     def win(self):
         for i in range(1, 11):
             for j in range(1, 11):
                 if self.board[i][j] == '-1':
+                    self.place = self.get_results()
                     return 0
         print(self.flags)
-        print(self.mn)  
+        print(self.mn)
+        self.count_true_mines = len(self.flags & self.mn)
+        self.place = self.get_results()
         if self.flags == self.mn:
             return 1
         return 0
+    
+    def get_results(self):
+        con = sqlite3.connect('database_saper.sqlite3')
+        cur = con.cursor()
+        data1 = cur.execute(f"""SELECT *
+                               FROM table_main
+                               WHERE username = '{self.username}'""")
+        data = []
+        for elem in data1:
+            data.append(elem)
+        if len(data) != 0:
+            cur.execute(f"""
+                    UPDATE table_main
+                    SET last_result = '{self.count_true_mines}'
+                    WHERE username = '{self.username}'
+                    """)
+            con.commit()
+            if int(data[0][3]) > int(data[0][2]):
+                cur.execute(f"""
+                    UPDATE table_main
+                    SET best_result = '{self.count_true_mines}'
+                    WHERE username = '{self.username}'
+                    """)
+                con.commit()
+        else:
+            cur.execute(f"""INSERT INTO table_main(username,best_result,last_result)
+                        VALUES('{self.username}', '{self.count_true_mines}',  '{self.count_true_mines}')""")
+            con.commit()
+        data2 = cur.execute(f"""SELECT *
+                                FROM table_main""")
+        data = []
+        for elem in data2:
+            data.append(elem)
+        data1 = cur.execute(f"""SELECT *
+                               FROM table_main
+                               WHERE username = '{self.username}'""")
+        data_user = []
+        for elem in data1:
+            data_user.append(elem)
+        data = sorted(data, key=lambda x: x[2])
+        data.reverse()
+        place = data.index(data_user[0]) + 1
+        data = data[:3]
+        con.close()
+        return [place, (data[0][0], data[0][1]), (data[1][0], data[1][1]), (data[2][0], data[2][1])]
