@@ -136,8 +136,8 @@ def main_start_game(count_of_mines, username):
             font_1 = pygame.font.SysFont('Classy Vogue', 100)
             font_2 = pygame.font.SysFont('Classy Vogue', 30)
             if res == True:
-                text_surface = font_1.render('Ты выиграл', False, (0, 0, 0))
-                board.screen.blit(text_surface, (100, 200))
+                fon_end = pygame.transform.scale(load_image('win_fon.png'), (600, 600))
+                board.screen.blit(fon_end, (0, 0))
             else:
                 fon_end = pygame.transform.scale(load_image('loss_fon.png'), (600, 600))
                 board.screen.blit(fon_end, (0, 0))
