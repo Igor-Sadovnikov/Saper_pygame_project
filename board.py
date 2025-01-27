@@ -286,4 +286,4 @@ class Minesweeper(Board): # Класс игрового поля сапёра
         place = data.index(data_user[0]) + 1
         data = data[:3]
         con.close()
-        return [place, (data[0][0], data[0][1]), (data[1][0], data[1][1]), (data[2][0], data[2][1])]
+        return [place, (data[0][2], data[0][1]), (data[1][2], data[1][1]), (data[2][2], data[2][1])]
