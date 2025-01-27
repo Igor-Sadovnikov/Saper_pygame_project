@@ -1,11 +1,18 @@
-import pygame
 import os
+import pygame
 import sys
-from board_1 import Minesweeper
-from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QLCDNumber, QPushButton, QInputDialog
+from board import Minesweeper
+from PyQt6.QtWidgets import (
+    QApplication, 
+    QInputDialog,
+    QLabel,
+    QLCDNumber,
+    QLineEdit,
+    QMainWindow,
+    QPushButton)
 
 
-class Input_dialog(QWidget):
+class Input_dialog(QMainWindow): # Графический интерфейс меню
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -13,40 +20,43 @@ class Input_dialog(QWidget):
     def initUI(self):
         self.setGeometry(700, 500, 400, 250)
         self.setWindowTitle('Сапёр')
-        self.count_mines = 10
+        self.count_mines = 10 # количество мин по умолчанию
         self.input_name = QLineEdit(self)
-        self.input_name.move(200, 50)
         self.label_name = QLabel(self)
-        self.label_name.setText('Введите имя пользователя')
-        self.label_name.move(10, 50)
         self.LCD_count = QLCDNumber(self)
-        self.LCD_count.move(120, 100)
-        self.LCD_count.display(self.count_mines)
         self.label_count = QLabel(self)
-        self.label_count.move(10, 100)
-        self.label_count.setText('Количество мин:')
         self.change_btn = QPushButton(self)
-        self.change_btn.move(50, 150)
-        self.change_btn.setText('Изменить кол-во мин')
-        self.change_btn.clicked.connect(self.dialog)
         self.ok_button = QPushButton(self)
+        self.input_name.setGeometry(200, 50, 150, 30)
+        self.label_name.setGeometry(10, 50, 200, 30)
+        self.LCD_count.move(120, 100)
+        self.label_count.move(10, 100)
+        self.change_btn.setGeometry(50, 150, 200, 30)
         self.ok_button.move(50, 200)
+        self.label_name.setText('Введите имя пользователя')
+        self.label_count.setText('Количество мин:')
+        self.change_btn.setText('Изменить кол-во мин')
         self.ok_button.setText('ОК')
+        self.change_btn.clicked.connect(self.dialog)
         self.ok_button.clicked.connect(self.run_game)
+        self.LCD_count.display(self.count_mines)
 
-    def dialog(self):
+    def dialog(self): # Диалоговое окно с вводом кол-ва мин
         new_count, ok_pressed = QInputDialog.getInt(
     self, "Введите количество мин", "Введите количество мин",
     10, 10, 99, 1)
         self.count_mines = new_count
         self.LCD_count.display(self.count_mines)
 
-    def run_game(self):
-        self.close()
-        main_start_game(self.count_mines, self.input_name.text())
+    def run_game(self): # Проверка введённых данных и запуск игры
+        if self.input_name.text() != '':
+            self.close()
+            main_start_game(self.count_mines, self.input_name.text())
+        else:
+            self.statusBar().showMessage('Введите имя пользователя')
 
 
-def load_image(name, colorkey=None):
+def load_image(name, colorkey=None): # Загрузка изображений
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
@@ -62,19 +72,47 @@ def load_image(name, colorkey=None):
     return image
 
 
+class Explosion(pygame.sprite.Sprite): # Анимация взрыва
+	def __init__(self, x, y):
+		pygame.sprite.Sprite.__init__(self)
+		self.images = []
+		for num in range(1, 6):
+			img = pygame.transform.scale(load_image(f'exp{num}.png'), (100, 100))
+			self.images.append(img)
+		self.index = 0
+		self.image = self.images[self.index]
+		self.rect = self.image.get_rect()
+		self.rect.center = [x, y]
+		self.counter = 0
+
+	def update(self):
+		explosion_speed = 4
+		self.counter += 1
+		if self.counter >= explosion_speed and self.index < len(self.images) - 1:
+			self.counter = 0
+			self.index += 1
+			self.image = self.images[self.index]
+		if self.index >= len(self.images) - 1 and self.counter >= explosion_speed:
+			self.kill()
+
+
 pygame.init()
 size = width, height = 500, 500
 tile_width = tile_height = 50
 screen = pygame.display.set_mode(size)
+explosion_group = pygame.sprite.Group()
 FPS = 50
+# Загрузка звука
+fullname = os.path.join('data', 'fail.mp3')
+pygame.mixer.music.load(fullname) 
 
 
-def terminate():
+def terminate(): # Завершение игры
     pygame.quit()
     sys.exit()
 
 
-def start_screen():
+def start_screen(): # Начальная заставка
     global count_of_mines
     fon = pygame.transform.scale(load_image('fon.png'), (500, 500))
     screen.blit(fon, (0, 0))
@@ -95,15 +133,16 @@ def start_screen():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 if text_surface_restart_rect.collidepoint(mouse_pos):
-                    running = False  # начинаем игру
+                    running = False
         if running == True:
             pygame.display.flip()
         clock.tick(FPS)
 
 
-def main_start_game(count_of_mines, username):
+def main_start_game(count_of_mines, username): # Загрузка игрового поля
     ch = True
     running = True
+    fail = False
     board = Minesweeper(10, 10, count_of_mines, username)
     board.set_view(0, 0, 50)
     while running:
@@ -113,24 +152,46 @@ def main_start_game(count_of_mines, username):
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     pos = board.get_cell(event.pos)
-                    if board.open_cell(pos) == -1:
-                        print('game_over')
-                        ch = False
-                        res = False
-                    if board.win() == 1:
-                        print('You win')
+                    if board.open_cell(pos) == -1: # Проигрыш
+                        pygame.mixer.music.play()
+                        fail = True
+                        board.fail = True
+                        explosion = Explosion(event.pos[0], event.pos[1])
+                        timer_duration = 100
+                        start_time = pygame.time.get_ticks()
+                        explosion_group.add(explosion)
+                        # Задержка для проигрывания анимации
+                        current_time = pygame.time.get_ticks()
+                        if current_time - start_time >= timer_duration:
+                            ch = False
+                            res = False
+                            current_time = False
+                            start_time = False
+                            timer_duration = False
+                    if board.win() == 1: # Выигрыш
                         ch = False
                         res = True
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3: # Установка флажков
                     pos = board.get_cell(event.pos)
                     board.show_flag(pos)
                     if board.win() == 1:
-                        print('You win')
                         ch = False
                         res = True
+                try: # Проверка таймера анимации
+                    if fail:
+                        current_time = pygame.time.get_ticks()
+                        if current_time - start_time >= timer_duration: 
+                            ch = False
+                            res = False
+                            current_time = False
+                            start_time = False
+                            timer_duration = False
+                            fail = False
+                except Exception:
+                    pass
                 board.screen.fill('black')
                 board.render()
-        else:
+        else: # Вывод конечной заставки
             board.screen.fill('white')
             pygame.font.init()
             font_1 = pygame.font.SysFont('Classy Vogue', 100)
@@ -164,10 +225,14 @@ def main_start_game(count_of_mines, username):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if text_surface_restart_rect.collidepoint(event.pos):
                         ch = True
+                        fail = False
+                        board.fail = False
                         board = Minesweeper(10, 10, count_of_mines, username)
                         board.set_view(0, 0, 50)
         if running:
             pygame.display.update()
+            explosion_group.draw(screen)
+            explosion_group.update()
 
 
 def main():
@@ -175,16 +240,17 @@ def main():
     start()
 
 
-def start():
+def start(): # Первоначальный запуск
     app = QApplication(sys.argv)
     ex = Input_dialog()
     ex.show()
     app.exec()
 
 
-def restart():
+def restart(): # Рестарт
     ex = Input_dialog()
     ex.show()
+
 
 if __name__ == '__main__':
     main()
