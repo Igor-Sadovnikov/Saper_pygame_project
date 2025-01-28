@@ -102,6 +102,7 @@ tile_width = tile_height = 50
 screen = pygame.display.set_mode(size)
 explosion_group = pygame.sprite.Group()
 FPS = 50
+pygame.display.set_caption('Сапёр')
 # Загрузка звука
 fullname = os.path.join('data', 'fail.mp3')
 pygame.mixer.music.load(fullname) 
